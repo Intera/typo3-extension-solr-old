@@ -64,7 +64,8 @@ class Tx_Solr_FieldProcessor_PageUidToHierarchy extends Tx_Solr_FieldProcessor_A
 		$results = array();
 
 		foreach ($values as $value) {
-			$results[] = $this->getSolrRootlineForPageId($value);
+			list($rootPageUid, $mountPoint) = t3lib_div::trimExplode(',', $value, TRUE, 2);
+			$results[] = $this->getSolrRootlineForPageId($rootPageUid, $mountPoint);
 		}
 
 		return $results;
@@ -74,10 +75,11 @@ class Tx_Solr_FieldProcessor_PageUidToHierarchy extends Tx_Solr_FieldProcessor_A
 	 * Returns a Solr hierarchy notation string for rootline of given PID.
 	 *
 	 * @param integer $pageId Page ID to get a rootline as Solr hierarchy for
+	 * @param string $mountPoint The mount point parameter that will be used for building the rootline.
 	 * @return string Rootline as Solr hierarchy
 	 */
-	protected function getSolrRootlineForPageId($pageId) {
-		$pageIdRootline = $this->buildPageIdRootline($pageId);
+	protected function getSolrRootlineForPageId($pageId, $mountPoint = '') {
+		$pageIdRootline = $this->buildPageIdRootline($pageId, $mountPoint);
 		$solrRootline   = $this->buildSolrHierarchyFromIdRootline($pageIdRootline);
 
 		return $solrRootline;
@@ -87,13 +89,14 @@ class Tx_Solr_FieldProcessor_PageUidToHierarchy extends Tx_Solr_FieldProcessor_A
 	 * Builds a page's rootline of parent page Ids
 	 *
 	 * @param integer $pageId The page Id to build the rootline for
+	 * @param string $mountPoint The mount point parameter that will be passed to getRootline().
 	 * @return array Page Id rootline as array
 	 */
-	protected function buildPageIdRootline($pageId) {
+	protected function buildPageIdRootline($pageId, $mountPoint = '') {
 		$rootlinePageIds = array();
 
 		$pageSelector = GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');
-		$rootline = $pageSelector->getRootLine($pageId);
+		$rootline = $pageSelector->getRootLine($pageId, (string)$mountPoint);
 
 		foreach($rootline as $page) {
 			if ($page['is_siteroot']) {
