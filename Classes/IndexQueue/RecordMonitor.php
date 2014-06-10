@@ -376,9 +376,6 @@ class Tx_Solr_IndexQueue_RecordMonitor {
 		$pageSelect = t3lib_div::makeInstance('t3lib_pageSelect');
 		$rootLine   = $pageSelect->getRootLine($pageId);
 
-			// remove the current page / newly created page
-		array_shift($rootLine);
-
 		$destinationMountProperties = $this->getDestinationMountPropertiesByRootLine($rootLine);
 
 		if (!empty($destinationMountProperties)) {
@@ -396,24 +393,39 @@ class Tx_Solr_IndexQueue_RecordMonitor {
 	 */
 	protected function getDestinationMountPropertiesByRootLine(array $rootLine) {
 		$mountPages = array();
-		$pageIds    = array();
+		$subPageUids = array();
+
+		$currentPage = array_shift($rootLine);
+		$currentPageUid = (int)$currentPage['uid'];
 
 		if (!empty($rootLine)) {
 			foreach ($rootLine as $pageRecord) {
-				$pageIds[] = $pageRecord['uid'];
+				$subPageUids[] = $pageRecord['uid'];
 
 				if ($pageRecord['is_siteroot']) {
 					break;
 				}
 			}
-
-			$mountPages = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
-				'uid, uid AS mountPageDestination, mount_pid AS mountPageSource, mount_pid_ol AS mountPageOverlayed',
-				'pages',
-				'doktype = 7 AND no_search = 0 AND mount_pid IN(' . implode(',', $pageIds) . ')'
-					. t3lib_BEfunc::deleteClause('pages')
-			);
 		}
+
+		if (empty($rootLine) && $currentPageUid === 0) {
+			return $mountPages;
+		}
+
+		$pageQuery = '';
+		if (!empty($subPageUids)) {
+			$pageQuery = 'mount_pid IN(' . implode(',', $subPageUids) . ')';
+		}
+		if ($currentPageUid !== 0) {
+			$pageQuery .= ' OR (mount_pid=' . $currentPageUid . ' AND mount_pid_ol=1)';
+		}
+
+		$mountPages = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
+			'uid, uid AS mountPageDestination, mount_pid AS mountPageSource, mount_pid_ol AS mountPageOverlayed',
+			'pages',
+			'(' . $pageQuery . ') AND doktype = 7 AND no_search = 0'
+				. t3lib_BEfunc::deleteClause('pages')
+		);
 
 		return $mountPages;
 	}
