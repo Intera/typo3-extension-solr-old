@@ -164,14 +164,16 @@ class Tx_Solr_Access_Rootline {
 	 * Gets the Access Rootline for a specific page Id.
 	 *
 	 * @param	integer	$pageId The page Id to generate the Access Rootline for.
+	 * @param string $mountPointParameter The mount point parameter for generating the rootline.
 	 * @return	Tx_Solr_Access_Rootline	Access Rootline for the given page Id.
 	 */
-	public static function getAccessRootlineByPageId($pageId) {
+	public static function getAccessRootlineByPageId($pageId, $mountPointParameter = '') {
 		$accessRootline = t3lib_div::makeInstance('Tx_Solr_Access_Rootline');
 
+		/** @var t3lib_pageSelect $pageSelector */
 		$pageSelector = t3lib_div::makeInstance('t3lib_pageSelect');
 		$pageSelector->init(FALSE);
-		$rootline = $pageSelector->getRootLine($pageId);
+		$rootline = $pageSelector->getRootLine($pageId, $mountPointParameter);
 		$rootline = array_reverse($rootline);
 
 			// parent pages
