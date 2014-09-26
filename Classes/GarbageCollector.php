@@ -406,22 +406,55 @@ class Tx_Solr_GarbageCollector {
 	 * @param integer $uid The record's uid.
 	 */
 	protected function deleteIndexDocuments($table, $uid) {
+		/** @var Tx_Solr_IndexQueue_Queue $indexQueue */
 		$indexQueue        = GeneralUtility::makeInstance('Tx_Solr_IndexQueue_Queue');
+		/** @var Tx_Solr_ConnectionManager $connectionManager */
 		$connectionManager = GeneralUtility::makeInstance('Tx_Solr_ConnectionManager');
 
 			// record can be indexed for multiple sites
 		$indexQueueItems = $indexQueue->getItems($table, $uid);
 
+		/** @var Tx_Solr_IndexQueue_Item $indexQueueItem */
 		foreach ($indexQueueItems as $indexQueueItem) {
 			$site = $indexQueueItem->getSite();
 
 				// a site can have multiple connections (cores / languages)
 			$solrConnections = $connectionManager->getConnectionsBySite($site);
 			foreach ($solrConnections as $solr) {
-				$solr->deleteByQuery('type:' . $table . ' AND uid:' . intval($uid));
+
+				$deleteQuery = $this->buildDeleteQueryByTypeAndUid($table, $uid);
+
+				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['solr']['garbageCollectorPreProcessDeleteQuery'])) {
+					foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['solr']['garbageCollectorPreProcessDeleteQuery'] as $classReference) {
+						$deleteQueryPreProcessor = t3lib_div::getUserObj($classReference);
+
+						if ($deleteQueryPreProcessor instanceof Tx_Solr_GarbageCollectorDeleteQueryPreProcessor) {
+							$deleteQuery = $deleteQueryPreProcessor->getGarbageCollectorDeleteQuery($deleteQuery, $table, $uid, $this);
+						} else {
+							throw new UnexpectedValueException(
+								get_class($deleteQueryPreProcessor) . ' must implement interface Tx_Solr_GarbageCollectorDeleteQueryPreProcessor',
+								1411735700
+							);
+						}
+					}
+				}
+
+				$solr->deleteByQuery($deleteQuery);
 				$solr->commit(FALSE, FALSE, FALSE);
 			}
 		}
+	}
+
+	/**
+	 * Builds the query for deleting Solr documents of the given type with the given UID.
+	 * The method is public so that it can be called by hooks.
+	 *
+	 * @param string $type
+	 * @param int $uid
+	 * @return string
+	 */
+	public function buildDeleteQueryByTypeAndUid($type, $uid) {
+		return 'type:' . $type . ' AND uid:' . intval($uid);
 	}
 
 	/**
