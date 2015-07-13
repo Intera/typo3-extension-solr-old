@@ -1,0 +1,51 @@
+{
+  "name": "apache-solr-for-typo3/solr",
+  "type": "typo3-cms-extension",
+  "description": "Apache Solr integration for TYPO3",
+  "minimum-stability": "alpha",
+  "license": "GPL-2.0+",
+  "keywords": ["typo3", "TYPO3 CMS", "solr", "search"],
+  "homepage": "http://www.typo3-solr.com",
+  "authors": [
+    {
+      "name": "Ingo Renner",
+      "email": "ingo@typo3.org",
+      "role": "Lead Developer"
+    }
+  ],
+  "support": {
+    "email": "typo3-project-solr@lists.typo3.org",
+    "issues": "https://github.com/TYPO3-Solr/ext-solr/issues",
+    "forum": "http://forum.typo3.org/index.php/f/53/",
+    "wiki": "https://forge.typo3.org/projects/extension-solr/wiki",
+    "source": "https://github.com/TYPO3-Solr/ext-solr"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "http://composer.typo3.org/"
+    }
+  ],
+  "require": {
+    "php": ">=5.3.7 <6.0"
+  },
+  "require-dev": {
+    "typo3-ci/typo3cms": "dev-master"
+  },
+  "autoload": {
+    "classmap": [
+      "Lib/",
+      "Classes/",
+      "CliApi/",
+      "EidApi/",
+      "EidSuggest/",
+      "Interfaces/",
+      "ModIndex/",
+      "PiFrequentSearches/",
+      "PiResults/",
+      "PiSearch/",
+      "Report/",
+      "Scheduler/"
+     ]
+  }
+}
